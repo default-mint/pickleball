@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baseline | Racket-Sport Gear and Circulation Support</title>
+<meta name="description" content="Baseline is a court-sport gear shop. Grips, socks, visors, towels, bottles, bags, shades, and Circulation, our blood-flow support for players. Show up. Warm up. Play longer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ───────────────────────────────────────────────
+     BASELINE - Court Report Filmstrip
+     Design intent: an energetic court/racket-sport gear shop.
+     Gear is presented in horizontal-scrolling category FILMSTRIPS
+     (not a vertical grid). A bold athletic hero, then a featured
+     "Circulation" supplement spotlight band, then filmstrips by
+     category, then a brand-promise trio, then footer.
+     Palette: court-blue #1B6FB3, optic white #F7F9FB,
+     center-line yellow #E7C649, graphite #1A1D21. Backgrounds
+     are never flat (court-line texture + soft washes).
+     Type: Familjen Grotesk (display) + Sora (body).
+     Voice: energetic, plain-spoken, encouraging.
+     ─────────────────────────────────────────────── */
+  :root {
+    --blue: #1B6FB3;
+    --blue-deep: #145488;
+    --blue-soft: #E3EEF7;
+    --white: #F7F9FB;
+    --paper: #FFFFFF;
+    --yellow: #E7C649;
+    --graphite: #1A1D21;
+    --ink-soft: rgba(26, 29, 33, 0.62);
+    --line: rgba(26, 29, 33, 0.14);
+    --line-soft: rgba(26, 29, 33, 0.07);
+    --error: #C0463F;
+    --display: 'Familjen Grotesk', system-ui, sans-serif;
+    --body: 'Sora', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--body);
+    color: var(--graphite);
+    background: var(--white);
+    line-height: 1.6;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  /* ───── Banners ───── */
+  .b-help {
+    background: var(--paper); color: var(--graphite);
+    padding: 7px 16px; text-align: center;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 500;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .b-help a { color: var(--blue); font-weight: 600; margin-left: 8px; }
+  .b-help a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  .b-loud {
+    background: var(--yellow); color: var(--graphite);
+    text-align: center; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700;
+    overflow: hidden; position: relative;
+  }
+  .b-loud::before, .b-loud::after { content:''; position:absolute; top:0; bottom:0; width:70px; z-index:2; pointer-events:none; }
+  .b-loud::before { left:0; background: linear-gradient(to right, var(--yellow), transparent); }
+  .b-loud::after { right:0; background: linear-gradient(to left, var(--yellow), transparent); }
+  .b-loud-track { position: relative; height: 40px; }
+  .loud-msg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; white-space:nowrap; opacity:0; transform:translateY(8px); transition:opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); padding:0 16px; }
+  .loud-msg.active { opacity:1; transform:translateY(0); }
+  .loud-msg .ball { display:inline-block; width:7px; height:7px; border-radius:999px; background: var(--blue); margin-right:12px; vertical-align:middle; animation: bounce 1.4s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-3px);} }
+
+  .b-info {
+    background: var(--graphite); color: var(--white);
+    padding: 8px 16px; text-align: center;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500;
+  }
+  .b-info-track { display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap; }
+  .b-info-track .dot { color: var(--yellow); opacity: .7; }
+  @media (max-width: 700px) {
+    .b-help, .b-info { font-size: 10px; letter-spacing: 0.12em; }
+    .b-loud { font-size: 10.5px; letter-spacing: 0.1em; }
+    .b-loud-track { height: 36px; }
+    .b-loud::before, .b-loud::after { width: 28px; }
+  }
+
+  /* ───── Nav ───── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px clamp(18px, 4vw, 56px);
+    background: rgba(247, 249, 251, 0.9);
+    backdrop-filter: saturate(150%) blur(10px);
+    -webkit-backdrop-filter: saturate(150%) blur(10px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .wordmark {
+    font-family: var(--display); font-weight: 700;
+    font-size: 24px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .wordmark .mk-dot { width: 12px; height: 12px; border-radius: 999px; background: var(--yellow); border: 2px solid var(--blue); display:inline-block; }
+  .navlinks { display: flex; gap: clamp(14px, 2.2vw, 30px); font-size: 13px; font-weight: 500; }
+  .navlinks a { transition: color .2s; }
+  .navlinks a:hover { color: var(--blue); }
+  .bag-btn { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .bag-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 6px;
+    background: var(--blue); color: #fff; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .bag-count.empty { background: var(--line); color: var(--ink-soft); }
+  @media (max-width: 820px) { .navlinks { display: none; } }
+
+  /* ───── Hero ───── */
+  .hero {
+    position: relative;
+    min-height: clamp(440px, 72vh, 660px);
+    display: flex; align-items: flex-end;
+    overflow: hidden;
+    color: #fff;
+  }
+  .hero img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center 60%;
+    z-index: 0;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(to top, rgba(20,28,40,0.82) 0%, rgba(20,28,40,0.35) 45%, rgba(20,28,40,0.15) 100%);
+  }
+  .hero-inner {
+    position: relative; z-index: 2;
+    padding: clamp(28px, 5vw, 64px) clamp(18px, 4vw, 56px) clamp(36px, 5vw, 64px);
+    max-width: 760px;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 600;
+    color: var(--yellow);
+    margin-bottom: 18px;
+  }
+  .hero-eyebrow::before { content:''; width: 22px; height: 2px; background: var(--yellow); display:inline-block; }
+  .hero h1 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(40px, 7vw, 84px);
+    line-height: 0.98; letter-spacing: -0.02em;
+    margin-bottom: 18px;
+  }
+  .hero h1 .line2 { color: var(--yellow); }
+  .hero p { font-size: clamp(15px, 1.6vw, 18px); max-width: 520px; color: rgba(255,255,255,0.92); margin-bottom: 26px; }
+  .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 14px;
+    padding: 15px 28px; border-radius: 999px;
+    transition: transform .2s, background .2s, color .2s;
+  }
+  .btn-primary { background: var(--yellow); color: var(--graphite); }
+  .btn-primary:hover { transform: translateY(-2px); background: #f0d566; }
+  .btn-ghost { background: rgba(255,255,255,0.12); color:#fff; border: 1px solid rgba(255,255,255,0.5); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.22); }
+
+  /* ───── Section frame ───── */
+  .section { padding: clamp(48px, 7vw, 92px) clamp(18px, 4vw, 56px); }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: clamp(22px, 3vw, 36px); max-width: 1320px; margin-left:auto; margin-right:auto; }
+  .sec-kicker { font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 600; color: var(--blue); margin-bottom: 10px; }
+  .sec-title { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4.4vw, 52px); line-height: 1; letter-spacing: -0.01em; }
+  .sec-note { font-size: 13px; color: var(--ink-soft); max-width: 320px; }
+
+  /* ───── Circulation spotlight ───── */
+  .spotlight {
+    background:
+      radial-gradient(circle at 85% 15%, rgba(231,198,73,0.16), transparent 45%),
+      linear-gradient(135deg, var(--blue) 0%, var(--blue-deep) 100%);
+    color: #fff;
+    padding: clamp(48px, 7vw, 96px) clamp(18px, 4vw, 56px);
+    position: relative; overflow: hidden;
+  }
+  .spotlight::before {
+    content:''; position:absolute; left: 0; right: 0; top: 50%;
+    height: 2px; background: rgba(255,255,255,0.18);
+  }
+  .spot-grid {
+    max-width: 1180px; margin: 0 auto;
+    display: grid; grid-template-columns: 0.85fr 1.15fr; gap: clamp(32px, 5vw, 72px);
+    align-items: center; position: relative; z-index: 1;
+  }
+  @media (max-width: 880px) { .spot-grid { grid-template-columns: 1fr; } }
+  .spot-imgwrap {
+    background: rgba(255,255,255,0.96); border-radius: 18px;
+    padding: 18px; aspect-ratio: 1/1; max-width: 420px; width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+  }
+  .spot-imgwrap img { width: 100%; height: 100%; object-fit: contain; }
+  .spot-kicker { display:inline-flex; align-items:center; gap:8px; font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 700; color: var(--yellow); margin-bottom: 16px; }
+  .spot-title { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 5vw, 60px); line-height: 0.98; letter-spacing: -0.01em; margin-bottom: 16px; }
+  .spot-lead { font-size: clamp(15px, 1.5vw, 17px); color: rgba(255,255,255,0.92); margin-bottom: 22px; max-width: 520px; }
+  .spot-benefits { list-style: none; display: grid; gap: 10px; margin-bottom: 24px; max-width: 540px; }
+  .spot-benefits li { display: flex; gap: 12px; font-size: 14px; color: rgba(255,255,255,0.95); }
+  .spot-benefits li::before { content:''; flex-shrink:0; margin-top: 7px; width: 8px; height: 8px; border-radius: 999px; background: var(--yellow); }
+  .spot-ing { font-size: 12.5px; color: rgba(255,255,255,0.78); letter-spacing: 0.02em; margin-bottom: 26px; max-width: 540px; }
+  .spot-ing strong { color: #fff; font-weight: 600; }
+  .spot-buy { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .spot-price { font-family: var(--display); font-weight: 700; font-size: 30px; }
+  .spot-price span { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.7); font-family: var(--body); }
+  .spot-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .spot-actions .btn-primary { background: var(--yellow); }
+  .spot-actions .btn-pack { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.55); color:#fff; }
+  .spot-actions .btn-pack:hover { background: rgba(255,255,255,0.24); }
+  .spot-disc { font-size: 11px; color: rgba(255,255,255,0.62); margin-top: 18px; max-width: 540px; line-height: 1.55; }
+
+  /* ───── Filmstrips ───── */
+  .strip-wrap { max-width: 1320px; margin: 0 auto; }
+  .strip {
+    display: flex; gap: 20px;
+    overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 6px 4px 22px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--blue) var(--blue-soft);
+  }
+  .strip::-webkit-scrollbar { height: 8px; }
+  .strip::-webkit-scrollbar-track { background: var(--blue-soft); border-radius: 999px; }
+  .strip::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 999px; }
+  .pcard {
+    flex: 0 0 clamp(230px, 30vw, 300px);
+    scroll-snap-align: start;
+    background: var(--paper);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px; overflow: hidden;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s;
+  }
+  .pcard:hover { transform: translateY(-5px); box-shadow: 0 16px 36px rgba(26,29,33,0.12); }
+  .pcard-img { aspect-ratio: 1/1; background: var(--blue-soft); overflow: hidden; position: relative; }
+  .pcard-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s cubic-bezier(.2,.7,.2,1); }
+  .pcard:hover .pcard-img img { transform: scale(1.05); }
+  .pcard-tag {
+    position: absolute; top: 12px; left: 12px;
+    background: var(--graphite); color:#fff;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+    padding: 5px 10px; border-radius: 999px;
+  }
+  .pcard-add {
+    position: absolute; bottom: 12px; right: 12px;
+    width: 40px; height: 40px; border-radius: 999px;
+    background: var(--yellow); color: var(--graphite);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 600; line-height: 1;
+    opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s, background .2s;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+  .pcard:hover .pcard-add { opacity: 1; transform: translateY(0); }
+  .pcard-add:hover { background: #f0d566; }
+  .pcard-body { padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .pcard-name { font-family: var(--display); font-weight: 600; font-size: 19px; line-height: 1.1; }
+  .pcard-kind { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue); font-weight: 600; }
+  .pcard-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; flex: 1; }
+  .pcard-price { font-family: var(--display); font-weight: 700; font-size: 17px; margin-top: 4px; }
+  .strip-hint { font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+  .strip-hint .arrow { animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 0%,100%{ transform: translateX(0);} 50%{ transform: translateX(5px);} }
+
+  .strips-section { background: var(--white); }
+  .strip-block + .strip-block { margin-top: clamp(30px, 4vw, 54px); }
+
+  /* ───── Promise trio ───── */
+  .promise { background: var(--blue-soft); }
+  .promise-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 56px); }
+  @media (max-width: 760px) { .promise-inner { grid-template-columns: 1fr; } }
+  .promise-item .pno { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--blue); letter-spacing: 0.2em; margin-bottom: 14px; display:block; }
+  .promise-item h4 { font-family: var(--display); font-weight: 600; font-size: 22px; margin-bottom: 10px; }
+  .promise-item p { font-size: 14px; color: var(--ink-soft); line-height: 1.7; }
+
+  /* ───── Reviews ───── */
+  .reviews { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 880px) { .reviews { grid-template-columns: 1fr; } }
+  .review { background: var(--paper); border: 1px solid var(--line-soft); border-radius: 14px; padding: 26px; }
+  .review p { font-size: 15px; line-height: 1.6; margin-bottom: 18px; }
+  .review-by { display: flex; align-items: center; gap: 12px; }
+  .review-by img { width: 42px; height: 42px; border-radius: 999px; object-fit: cover; }
+  .review-by .rb-name { font-weight: 600; font-size: 14px; }
+  .review-by .rb-meta { font-size: 12px; color: var(--ink-soft); }
+
+  /* ───── Footer ───── */
+  footer { background: var(--graphite); color: var(--white); padding: clamp(52px, 7vw, 92px) clamp(18px, 4vw, 56px) 30px; }
+  .foot-grid { max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: clamp(28px, 5vw, 72px); padding-bottom: 44px; border-bottom: 1px solid rgba(255,255,255,0.16); }
+  @media (max-width: 880px) { .foot-grid { grid-template-columns: 1fr 1fr; gap: 30px; } }
+  .foot-mark { font-family: var(--display); font-weight: 700; font-size: 28px; margin-bottom: 14px; display:flex; align-items:center; gap:9px; }
+  .foot-mark .mk-dot { width: 11px; height: 11px; border-radius: 999px; background: var(--yellow); border: 2px solid var(--blue); display:inline-block; }
+  .foot-blurb { font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.6); max-width: 300px; }
+  .foot-h { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--yellow); margin-bottom: 16px; font-weight: 600; }
+  .foot-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .foot-list a, .foot-list span { font-size: 13px; color: rgba(255,255,255,0.78); transition: color .2s; }
+  .foot-list a:hover { color: #fff; }
+  .foot-bottom { max-width: 1320px; margin: 22px auto 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 0.04em; }
+
+  /* ───── Modal ───── */
+  .modal-bg { position: fixed; inset: 0; background: rgba(20,28,40,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity .28s; z-index: 90; }
+  .modal-bg.open { opacity: 1; pointer-events: auto; }
+  .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 24px)); width: min(880px, calc(100vw - 32px)); max-height: calc(100vh - 64px); background: var(--paper); z-index: 91; opacity: 0; pointer-events: none; transition: transform .36s cubic-bezier(.2,.7,.2,1), opacity .28s; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; border-radius: 18px; }
+  .modal.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+  .modal-img { background: var(--blue-soft); overflow: hidden; aspect-ratio: 1/1; }
+  .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+  .modal-info { padding: clamp(24px, 3.4vw, 42px); display: flex; flex-direction: column; overflow-y: auto; }
+  .modal-kind { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); font-weight: 600; margin-bottom: 12px; }
+  .modal-name { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 3.6vw, 44px); line-height: 1; margin-bottom: 10px; }
+  .modal-price { font-family: var(--display); font-weight: 700; font-size: 20px; margin-bottom: 20px; }
+  .modal-desc { font-size: 14px; line-height: 1.7; color: var(--ink-soft); margin-bottom: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+  .opt-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; margin-bottom: 12px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .opt-chip { padding: 11px 18px; border: 1px solid var(--line); background: transparent; font-size: 13px; font-weight: 500; border-radius: 999px; transition: all .18s; }
+  .opt-chip:hover { border-color: var(--blue); }
+  .opt-chip.selected { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .modal-add { background: var(--graphite); color: #fff; padding: 16px; font-size: 13px; letter-spacing: 0.08em; font-weight: 600; border-radius: 999px; margin-top: auto; transition: background .2s; }
+  .modal-add:hover { background: var(--blue); }
+  .modal-add:disabled { background: var(--line); color: var(--ink-soft); cursor: not-allowed; }
+  .modal-close { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 999px; background: var(--paper); display: flex; align-items: center; justify-content: center; z-index: 2; box-shadow: 0 2px 12px rgba(0,0,0,0.16); transition: transform .2s; }
+  .modal-close:hover { transform: rotate(90deg); }
+  @media (max-width: 760px) { .modal { grid-template-columns: 1fr; max-height: 92vh; overflow-y: auto; } .modal-img { aspect-ratio: 16/10; } }
+
+  /* ───── Cart drawer ───── */
+  .cart { position: fixed; top: 0; right: 0; width: min(440px, 92vw); height: 100vh; height: 100dvh; background: var(--white); z-index: 92; transform: translateX(100%); transition: transform .36s cubic-bezier(.2,.7,.2,1); display: flex; flex-direction: column; box-shadow: -2px 0 28px rgba(0,0,0,0.12); }
+  .cart.open { transform: translateX(0); }
+  .cart-header { padding: 22px 24px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .cart-title { font-family: var(--display); font-weight: 700; font-size: 22px; }
+  .cart-close { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .cart-close:hover { color: var(--graphite); }
+  .cart-items { flex: 1; overflow-y: auto; padding: 4px 24px; }
+  .cart-empty { padding: 70px 0; text-align: center; color: var(--ink-soft); }
+  .cart-empty p { font-family: var(--display); font-weight: 600; font-size: 19px; margin-bottom: 10px; color: var(--graphite); }
+  .cart-empty span { font-size: 13px; }
+  .cart-line { display: grid; grid-template-columns: 70px 1fr; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
+  .cart-line-img { width: 70px; height: 70px; border-radius: 10px; overflow: hidden; background: var(--blue-soft); }
+  .cart-line-img img { width: 100%; height: 100%; object-fit: cover; }
+  .cart-line-info { display: flex; flex-direction: column; justify-content: space-between; }
+  .cart-line-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .cart-line-name { font-family: var(--display); font-weight: 600; font-size: 16px; line-height: 1.1; }
+  .cart-line-meta { font-size: 11px; color: var(--ink-soft); margin-top: 3px; letter-spacing: 0.04em; }
+  .cart-line-price { font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .cart-line-bottom { display: flex; justify-content: space-between; align-items: center; }
+  .qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 0 4px; }
+  .qty button { width: 26px; height: 26px; color: var(--graphite); font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .qty button:hover { color: var(--blue); }
+  .qty span { padding: 0 8px; font-size: 13px; min-width: 18px; text-align: center; }
+  .cart-remove { font-size: 11px; letter-spacing: 0.06em; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; }
+  .cart-remove:hover { color: var(--error); }
+  .cart-foot { border-top: 1px solid var(--line); padding: 18px 24px 24px; background: var(--paper); }
+  .total-line { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0 14px; }
+  .total-line .tl { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft); }
+  .total-line .tv { font-family: var(--display); font-weight: 700; font-size: 28px; }
+  .cart-checkout { width: 100%; background: var(--blue); color: #fff; padding: 17px; font-size: 13px; letter-spacing: 0.06em; font-weight: 600; text-align: center; display: block; border-radius: 999px; transition: background .2s; }
+  .cart-checkout:hover { background: var(--blue-deep); }
+  .cart-hint { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 12px; line-height: 1.6; }
+
+  /* ───── Toast ───── */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(40px); background: var(--graphite); color: #fff; padding: 14px 22px; font-size: 13px; font-weight: 500; z-index: 100; opacity: 0; pointer-events: none; transition: opacity .24s, transform .36s cubic-bezier(.2,.7,.2,1); border-radius: 999px; display:flex; align-items:center; gap:10px; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast .ok { width: 18px; height: 18px; border-radius: 999px; background: var(--yellow); color: var(--graphite); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+
+  /* ───── Reveal ───── */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { transition: none; opacity: 1; transform: none; }
+    .loud-msg .ball, .strip-hint .arrow { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="b-help">Need Help? <a href="tel:1231231234">📞 123-123-1234</a></div>
+<div class="b-loud">
+  <div class="b-loud-track">
+    <span class="loud-msg active"><span class="ball"></span>Free Shipping on Orders Over $100</span>
+    <span class="loud-msg"><span class="ball"></span>Circulation 3-Pack: $99, That’s $33 a Bottle</span>
+    <span class="loud-msg"><span class="ball"></span>New Court Gear Drop: The Baseline Kit</span>
+    <span class="loud-msg"><span class="ball"></span>Code BAS10 for 10% Off at Checkout</span>
+    <span class="loud-msg"><span class="ball"></span>30-Day Returns on Every Order</span>
+  </div>
+</div>
+<div class="b-info">
+  <div class="b-info-track">
+    <span>Free Shipping Over $100</span><span class="dot">·</span>
+    <span>30-Day Returns</span><span class="dot">·</span>
+    <span>US Shipping</span><span class="dot">·</span>
+    <span>Secure Checkout</span>
+  </div>
+</div>
+
+<header class="nav">
+  <a href="#" class="wordmark"><span class="mk-dot"></span>Baseline</a>
+  <nav class="navlinks">
+    <a href="#circulation">Circulation</a>
+    <a href="#oncourt">On-Court Gear</a>
+    <a href="#essentials">Essentials</a>
+    <a href="#promise">Why Baseline</a>
+  </nav>
+  <button class="bag-btn" id="bagOpen" aria-label="Open bag">
+    <span>Bag</span><span class="bag-count empty" id="bagCount">0</span>
+  </button>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <!-- Photo by John Beagle on Flickr: https://www.flickr.com/photos/32575263@N00/2605366518 -->
+  <img src="images/hero.jpg" alt="Outdoor pickleball courts on a bright day" loading="eager">
+  <div class="hero-inner">
+    <span class="hero-eyebrow">Court-Sport Gear · Built for Players</span>
+    <h1>Show up. Warm up.<br><span class="line2">Play longer.</span></h1>
+    <p>A small, honest kit for racket-sport players: the grips, socks, and shades that get you on court, plus Circulation, our blood-flow support for the back half of a long session.</p>
+    <div class="hero-cta">
+      <a href="#circulation" class="btn btn-primary">Meet Circulation</a>
+      <a href="#oncourt" class="btn btn-ghost">Shop the Gear</a>
+    </div>
+  </div>
+</section>
+
+<!-- CIRCULATION SPOTLIGHT -->
+<section class="spotlight" id="circulation">
+  <div class="spot-grid">
+    <div class="spot-imgwrap reveal">
+      <!-- Studio product render generated via fal.ai (flux/schnell), no trademark -->
+      <img src="images/circulation.png" alt="Circulation blood-flow support supplement bottle">
+    </div>
+    <div class="reveal">
+      <span class="spot-kicker">The Featured Formula</span>
+      <h2 class="spot-title">Circulation</h2>
+      <p class="spot-lead">A blood-flow and circulation supplement, built around the demands of racket sport. For the third game, the long rally, the legs you want under you at the end of the session.</p>
+      <ul class="spot-benefits">
+        <li>Supports healthy circulation and blood flow</li>
+        <li>Supports endurance and leg freshness between games</li>
+        <li>Supports faster warm-up and recovery for racket-sport players</li>
+      </ul>
+      <p class="spot-ing"><strong>Inside:</strong> L-Citrulline · Beetroot Extract · Ginkgo Biloba · Cayenne · Vitamin B12.</p>
+      <div class="spot-buy">
+        <div class="spot-price">$39.99 <span>/ single bottle</span></div>
+      </div>
+      <div class="spot-actions" style="margin-top:18px;">
+        <button class="btn btn-primary" data-buy="circulation">Add Single, $39.99</button>
+        <button class="btn btn-pack" data-buy="circulation3">Add 3-Pack, $99</button>
+      </div>
+      <p class="spot-disc">A dietary supplement. Not intended to diagnose, treat, cure, or prevent any disease. Consult your healthcare provider before use, especially if pregnant, nursing, or taking medication.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ON-COURT FILMSTRIP -->
+<section class="section strips-section" id="oncourt">
+  <div class="sec-head">
+    <div>
+      <p class="sec-kicker">Filmstrip · On the Court</p>
+      <h2 class="sec-title">On-Court Gear</h2>
+    </div>
+    <div class="strip-hint">Scroll <span class="arrow">→</span></div>
+  </div>
+  <div class="strip-wrap">
+    <div class="strip" id="stripCourt"></div>
+  </div>
+</section>
+
+<!-- ESSENTIALS FILMSTRIP -->
+<section class="section strips-section" id="essentials" style="padding-top:0;">
+  <div class="sec-head">
+    <div>
+      <p class="sec-kicker">Filmstrip · Bag Essentials</p>
+      <h2 class="sec-title">Carry & Recover</h2>
+    </div>
+    <div class="strip-hint">Scroll <span class="arrow">→</span></div>
+  </div>
+  <div class="strip-wrap">
+    <div class="strip" id="stripEssentials"></div>
+  </div>
+</section>
+
+<!-- PROMISE TRIO -->
+<section class="section promise" id="promise">
+  <div class="sec-head" style="margin-bottom: clamp(28px,4vw,44px);">
+    <div>
+      <p class="sec-kicker">Why Baseline</p>
+      <h2 class="sec-title">Plain gear, no spin.</h2>
+    </div>
+  </div>
+  <div class="promise-inner">
+    <div class="promise-item reveal">
+      <span class="pno">01</span>
+      <h4>A short, real kit</h4>
+      <p>We carry what we actually reach for: grips, socks, a visor, a towel, a bottle, bands, a bag, shades. No filler, no fifty colorways you'll never buy.</p>
+    </div>
+    <div class="promise-item reveal">
+      <span class="pno">02</span>
+      <h4>Honest about Circulation</h4>
+      <p>Circulation is a supplement, not a miracle. We name every ingredient, we don't print dosages we can't stand behind, and we never claim it treats disease.</p>
+    </div>
+    <div class="promise-item reveal">
+      <span class="pno">03</span>
+      <h4>Easy to live with</h4>
+      <p>Free US shipping over $100, a flat $7.99 below it, and 30 days to send anything back. Questions go to a human at help@baseline.com.</p>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="section">
+  <div class="sec-head">
+    <div>
+      <p class="sec-kicker">From the courts</p>
+      <h2 class="sec-title">Player notes</h2>
+    </div>
+    <p class="sec-note">A few notes from players who shop the kit. Shared with permission.</p>
+  </div>
+  <div class="reviews">
+    <div class="review reveal">
+      <p>"The overgrip is the one I keep going back to. Tacky without being sticky, and it lasts a few weeks of open play."</p>
+      <div class="review-by">
+        <!-- Photo by ☺ Lee J Haywood on Flickr (CC BY-SA): https://www.flickr.com/photos/45034206@N06/4508026762 -->
+        <img src="images/face1.jpg" alt="Player headshot">
+        <div><div class="rb-name">Marcus T.</div><div class="rb-meta">Verified buyer</div></div>
+      </div>
+    </div>
+    <div class="review reveal">
+      <p>"I take Circulation before our Saturday round-robin. Can't make big claims, but my legs feel fresher into the later games. Easy to add to the morning."</p>
+      <div class="review-by">
+        <!-- Photo by mac.rj on Flickr: https://www.flickr.com/photos/38775064@N05/8689248933 -->
+        <img src="images/face2.jpg" alt="Player headshot">
+        <div><div class="rb-name">Dana R.</div><div class="rb-meta">Verified buyer</div></div>
+      </div>
+    </div>
+    <div class="review reveal">
+      <p>"Sling bag holds two paddles, a bottle, balls and my keys. Lives in the car now. Simple and it does the job."</p>
+      <div class="review-by">
+        <!-- Photo by John Beagle on Flickr: https://www.flickr.com/photos/32575263@N00/2605366518 -->
+        <img src="images/hero.jpg" alt="Court scene" style="object-position:center 50%;">
+        <div><div class="rb-name">Priya S.</div><div class="rb-meta">Verified buyer</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-grid">
+    <div>
+      <div class="foot-mark"><span class="mk-dot"></span>Baseline</div>
+      <p class="foot-blurb">A court-sport gear shop. A short, honest kit and Circulation, our blood-flow support for players. Free US shipping over $100.</p>
+    </div>
+    <div>
+      <p class="foot-h">Shop</p>
+      <ul class="foot-list">
+        <li><a href="#circulation">Circulation</a></li>
+        <li><a href="#oncourt">On-Court Gear</a></li>
+        <li><a href="#essentials">Carry &amp; Recover</a></li>
+        <li><a href="#promise">Why Baseline</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="foot-h">Help</p>
+      <ul class="foot-list">
+        <li><a href="shipping.html">Shipping</a></li>
+        <li><a href="returns.html">Returns</a></li>
+        <li><a href="mailto:help@baseline.com">Contact</a></li>
+        <li><a href="tel:1231231234">123-123-1234</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="foot-h">Legal</p>
+      <ul class="foot-list">
+        <li><a href="terms.html">Terms</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© <span id="year"></span> PLACEHOLDER LLC</span>
+    <span>123 Main Street, Placeholder, State 10101</span>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <button class="modal-close" id="modalClose" aria-label="Close">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.6"/></svg>
+  </button>
+  <div class="modal-img"><img id="modalImg" alt=""></div>
+  <div class="modal-info">
+    <div class="modal-kind" id="modalKind"></div>
+    <h3 class="modal-name" id="modalName"></h3>
+    <div class="modal-price" id="modalPrice"></div>
+    <p class="modal-desc" id="modalDesc"></p>
+    <div id="optWrap" hidden>
+      <div class="opt-label" id="optLabel">Size</div>
+      <div class="opts" id="opts"></div>
+    </div>
+    <button class="modal-add" id="modalAdd">Add to Bag</button>
+  </div>
+</div>
+
+<!-- CART -->
+<aside class="cart" id="cart" aria-hidden="true">
+  <div class="cart-header">
+    <h3 class="cart-title">Your Bag</h3>
+    <button class="cart-close" id="cartClose">Close</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot" hidden>
+    <div class="total-line"><span class="tl">Subtotal</span><span class="tv" id="cartTotal">$0</span></div>
+    <a href="checkout.html" class="cart-checkout">Checkout</a>
+    <p class="cart-hint">Shipping and tax calculated at checkout. Free US shipping over $100.</p>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PRODUCTS = [
+  { slug:'circulation', cat:'feature', kind:'Blood Flow & Circulation', name:'Circulation', price:39.99, img:'circulation.png',
+    desc:'A blood-flow and circulation supplement built around racket sport. Supports healthy circulation, endurance and leg freshness between games, and a faster warm-up and recovery. Inside: L-Citrulline, Beetroot Extract, Ginkgo Biloba, Cayenne, and Vitamin B12. A dietary supplement, not intended to diagnose, treat, cure, or prevent any disease.' },
+  { slug:'circulation3', cat:'feature', kind:'Circulation · 3-Pack', name:'Circulation 3-Pack', price:99.00, img:'circulation.png',
+    desc:'Three bottles of Circulation at a bundled price, for players who keep it in the morning routine through a full season. Same formula: L-Citrulline, Beetroot Extract, Ginkgo Biloba, Cayenne, Vitamin B12. A dietary supplement, not intended to diagnose, treat, cure, or prevent any disease.' },
+
+  // On-court gear
+  { slug:'grip', cat:'court', kind:'Overgrip Tape', name:'Cushioned Overgrip', price:11.99, img:'grip.png',
+    desc:'A cushioned overgrip that wraps your paddle or racket handle for a tackier, more comfortable hold. Soft feel, sweat-friendly surface, one roll per pack. One size.' },
+  { slug:'socks', cat:'court', kind:'Crew Socks', name:'Performance Crew Socks', price:14.99, img:'socks.jpg',
+    desc:'Cushioned crew socks with a reinforced heel and toe and a breathable mid-foot. Stay-up cuff for long sessions. Choose your size below.' },
+  { slug:'visor', cat:'court', kind:'Visor', name:'Sweat-Wicking Visor', price:18.99, img:'visor.png',
+    desc:'A lightweight sweat-wicking visor that keeps sun off your eyes and sweat off your brow without trapping heat like a full cap. Adjustable back. One size.' },
+  { slug:'wristband', cat:'court', kind:'Wristband Pair', name:'Sport Wristband Pair', price:9.99, img:'wristband.png',
+    desc:'A pair of terry wristbands that catch sweat before it reaches your grip. Soft, stretchy, and quick to rinse. Sold as a pair. One size.' },
+  { slug:'sunglasses', cat:'court', kind:'Sunglasses', name:'Polarized Court Sunglasses', price:34.99, img:'sunglasses.jpg',
+    desc:'Polarized sunglasses with a secure, lightweight frame that stays put through a rally. Cuts glare off bright courts so you can track the ball. One size.' },
+
+  // Carry & recover
+  { slug:'towel', cat:'essentials', kind:'Court Towel', name:'Microfiber Court Towel', price:16.99, img:'towel.png',
+    desc:'A quick-drying microfiber towel that packs small and dries fast between games. Folds into a side pocket without soaking your bag. One size.' },
+  { slug:'bottle', cat:'essentials', kind:'Water Bottle', name:'Insulated Water Bottle', price:28.99, img:'bottle.jpg',
+    desc:'An insulated bottle that keeps water cold through a long session in the sun. Leak-resistant lid, easy one-hand drink. One size.' },
+  { slug:'bag', cat:'essentials', kind:'Sling Bag', name:'Court Sling Bag', price:44.99, img:'bag.png',
+    desc:'A compact crossbody sling that holds a couple of paddles, balls, a bottle, and your keys. Adjustable strap, lives in the car. One size.' },
+];
+
+const PRODUCTS_INDEX = Object.fromEntries(PRODUCTS.map(p => [p.slug, p]));
+const VARIANTS = { socks: { label: 'Size', options: ['S/M', 'L/XL'] } };
+const STORAGE_KEY = 'baseline_cart';
+
+function loadCart() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+function saveCart(c) { localStorage.setItem(STORAGE_KEY, JSON.stringify(c)); }
+let cart = loadCart();
+
+function fmt(n) { return '$' + n.toFixed(2).replace(/\.00$/, ''); }
+function cartTotal(c) { return c.reduce((s, l) => s + l.price * l.qty, 0); }
+
+// ─── Filmstrips ───
+function cardHTML(p) {
+  return `
+  <article class="pcard" data-slug="${p.slug}">
+    <div class="pcard-img">
+      <img src="images/${p.img}" alt="${p.name}" loading="lazy">
+      <span class="pcard-tag">${p.kind}</span>
+      <button class="pcard-add" type="button" data-quick="${p.slug}" aria-label="Quick add ${p.name}">+</button>
+    </div>
+    <div class="pcard-body">
+      <span class="pcard-kind">${p.kind}</span>
+      <h3 class="pcard-name">${p.name}</h3>
+      <p class="pcard-desc">${p.desc.split('.')[0]}.</p>
+      <div class="pcard-price">${fmt(p.price)}</div>
+    </div>
+  </article>`;
+}
+function renderStrips() {
+  document.getElementById('stripCourt').innerHTML = PRODUCTS.filter(p => p.cat === 'court').map(cardHTML).join('');
+  document.getElementById('stripEssentials').innerHTML = PRODUCTS.filter(p => p.cat === 'essentials').map(cardHTML).join('');
+  document.querySelectorAll('.pcard').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('[data-quick]')) return;
+      openModal(card.dataset.slug);
+    });
+  });
+  document.querySelectorAll('[data-quick]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const p = PRODUCTS_INDEX[btn.dataset.quick];
+      if (VARIANTS[p.slug]) { openModal(p.slug); return; }
+      addToCart(p, null);
+      toast(`${p.name} added`);
+    });
+  });
+}
+
+// ─── Modal ───
+let modalProduct = null, modalOpt = null;
+function openModal(slug) {
+  const p = PRODUCTS_INDEX[slug];
+  if (!p) return;
+  modalProduct = p; modalOpt = null;
+  document.getElementById('modalImg').src = `images/${p.img}`;
+  document.getElementById('modalImg').alt = p.name;
+  document.getElementById('modalKind').textContent = p.kind;
+  document.getElementById('modalName').textContent = p.name;
+  document.getElementById('modalPrice').textContent = fmt(p.price);
+  document.getElementById('modalDesc').textContent = p.desc;
+  const optWrap = document.getElementById('optWrap');
+  const opts = document.getElementById('opts');
+  const add = document.getElementById('modalAdd');
+  const v = VARIANTS[p.slug];
+  if (v) {
+    optWrap.hidden = false;
+    document.getElementById('optLabel').textContent = v.label;
+    opts.innerHTML = v.options.map(o => `<button class="opt-chip" data-opt="${o}">${o}</button>`).join('');
+    opts.querySelectorAll('.opt-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        opts.querySelectorAll('.opt-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        modalOpt = chip.dataset.opt;
+        add.disabled = false;
+        add.textContent = `Add ${p.name}, ${modalOpt}`;
+      });
+    });
+    add.disabled = true;
+    add.textContent = `Select ${v.label}`;
+  } else {
+    optWrap.hidden = true;
+    add.disabled = false;
+    add.textContent = `Add to Bag, ${fmt(p.price)}`;
+  }
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('modal').setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modalBg').classList.remove('open');
+  document.getElementById('modal').setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalBg').addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCart(); } });
+document.getElementById('modalAdd').addEventListener('click', () => {
+  if (!modalProduct) return;
+  if (VARIANTS[modalProduct.slug] && !modalOpt) return;
+  addToCart(modalProduct, modalOpt);
+  closeModal();
+  toast(`${modalProduct.name}${modalOpt ? ' · ' + modalOpt : ''} added`);
+});
+
+// ─── Spotlight buy buttons ───
+document.querySelectorAll('[data-buy]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = PRODUCTS_INDEX[btn.dataset.buy];
+    addToCart(p, null);
+    toast(`${p.name} added`);
+  });
+});
+
+// ─── Cart ───
+function addToCart(p, opt) {
+  const existing = cart.find(l => l.slug === p.slug && l.opt === (opt || null));
+  if (existing) existing.qty += 1;
+  else cart.push({ slug: p.slug, name: p.name, price: p.price, opt: opt || null, qty: 1 });
+  saveCart(cart); renderCart(); openCart();
+}
+function removeLine(slug, opt) { cart = cart.filter(l => !(l.slug === slug && l.opt === opt)); saveCart(cart); renderCart(); }
+function changeQty(slug, opt, d) {
+  const l = cart.find(x => x.slug === slug && x.opt === opt);
+  if (!l) return;
+  l.qty = Math.max(0, l.qty + d);
+  if (l.qty === 0) cart = cart.filter(x => !(x.slug === slug && x.opt === opt));
+  saveCart(cart); renderCart();
+}
+function renderCart() {
+  const items = document.getElementById('cartItems');
+  const foot = document.getElementById('cartFoot');
+  const count = cart.reduce((s, l) => s + l.qty, 0);
+  const cc = document.getElementById('bagCount');
+  cc.textContent = count; cc.classList.toggle('empty', count === 0);
+  if (cart.length === 0) {
+    items.innerHTML = `<div class="cart-empty"><p>Your bag is empty.</p><span>Grab a grip and get on court.</span></div>`;
+    foot.hidden = true; return;
+  }
+  items.innerHTML = cart.map(l => {
+    const p = PRODUCTS_INDEX[l.slug];
+    const meta = l.opt ? l.opt : (p ? p.kind : '');
+    return `
+    <div class="cart-line">
+      <div class="cart-line-img"><img src="images/${p ? p.img : ''}" alt="${l.name}"></div>
+      <div class="cart-line-info">
+        <div class="cart-line-top">
+          <div><div class="cart-line-name">${l.name}</div><div class="cart-line-meta">${meta}</div></div>
+          <div class="cart-line-price">${fmt(l.price * l.qty)}</div>
+        </div>
+        <div class="cart-line-bottom">
+          <div class="qty">
+            <button data-act="dec" data-slug="${l.slug}" data-opt="${l.opt || ''}">−</button>
+            <span>${l.qty}</span>
+            <button data-act="inc" data-slug="${l.slug}" data-opt="${l.opt || ''}">+</button>
+          </div>
+          <button class="cart-remove" data-act="rem" data-slug="${l.slug}" data-opt="${l.opt || ''}">Remove</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  items.querySelectorAll('button[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const opt = btn.dataset.opt || null;
+      if (btn.dataset.act === 'inc') changeQty(btn.dataset.slug, opt, +1);
+      if (btn.dataset.act === 'dec') changeQty(btn.dataset.slug, opt, -1);
+      if (btn.dataset.act === 'rem') removeLine(btn.dataset.slug, opt);
+    });
+  });
+  document.getElementById('cartTotal').textContent = fmt(cartTotal(cart));
+  foot.hidden = false;
+}
+function openCart() { document.getElementById('cart').classList.add('open'); document.getElementById('cart').setAttribute('aria-hidden', 'false'); }
+function closeCart() { document.getElementById('cart').classList.remove('open'); document.getElementById('cart').setAttribute('aria-hidden', 'true'); }
+document.getElementById('bagOpen').addEventListener('click', openCart);
+document.getElementById('cartClose').addEventListener('click', closeCart);
+
+// ─── Toast ───
+let toastT;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span class="ok">✓</span>${msg}`;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── Reveal ───
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+}, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ─── Loud banner rotation ───
+(function() {
+  const msgs = document.querySelectorAll('.loud-msg');
+  if (msgs.length < 2) return;
+  let i = 0;
+  setInterval(() => { msgs[i].classList.remove('active'); i = (i + 1) % msgs.length; msgs[i].classList.add('active'); }, 3200);
+})();
+
+// ─── Init ───
+document.getElementById('year').textContent = new Date().getFullYear();
+renderStrips();
+renderCart();
+</script>
+</body>
+</html>

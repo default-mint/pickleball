@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checkout | Dink House</title>
-<meta name="description" content="Secure checkout for your Dink House bag.">
+<title>Checkout | Dink House Pickleball</title>
+<meta name="description" content="Secure checkout for your Dink House Pickleball bag.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -151,7 +151,7 @@
 </div>
 
 <header class="nav">
-  <a href="index.html" class="wordmark"><span class="mk-dot"></span>Dink House</a>
+  <a href="index.html" class="wordmark"><span class="mk-dot"></span>Dink House Pickleball</a>
   <span class="secure"><svg viewBox="0 0 16 16" fill="none"><path d="M3 7V5a5 5 0 0110 0v2M3 7h10v7H3V7z" stroke="currentColor" stroke-width="1.4"/></svg>Secure Checkout</span>
 </header>
 
@@ -257,7 +257,7 @@
 <section id="successScreen" class="success">
   <div class="success-mark">✓</div>
   <h1>You're on court.</h1>
-  <p id="successName">Your Dink House order is confirmed.</p>
+  <p id="successName">Your Dink House Pickleball order is confirmed.</p>
   <p id="successEmail"></p>
   <div class="success-order" id="successOrderId"></div>
   <br><br>
@@ -479,7 +479,7 @@ document.getElementById('orderForm').addEventListener('submit', async (e) => {
   document.getElementById('checkoutMain').style.display = 'none';
   document.querySelector('.steps').style.display = 'none';
   const success = document.getElementById('successScreen');
-  document.getElementById('successName').textContent = `Thanks, ${payload.customer.first_name}. Your Dink House order is confirmed.`;
+  document.getElementById('successName').textContent = `Thanks, ${payload.customer.first_name}. Your Dink House Pickleball order is confirmed.`;
   document.getElementById('successEmail').textContent = `A confirmation has been sent to ${payload.email}. Tracking arrives within 1 business day.`;
   document.getElementById('successOrderId').textContent = `Order · ${orderId}`;
   success.classList.add('show');
